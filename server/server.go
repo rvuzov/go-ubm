@@ -12,21 +12,25 @@ import (
 
 type (
 	BServer struct {
-		Addr string
+		Addr        string
+		MongoDbHost string
+		MongoDbName string
 	}
 )
 
-func New(addr string) BServer {
+func New(addr string, mongoDbHost string, mongoDbName string) BServer {
 	server := BServer{
-		Addr: addr,
+		Addr:        addr,
+		MongoDbHost: mongoDbHost,
+		MongoDbName: mongoDbName,
 	}
 	return server
 }
 
 func (server *BServer) Run() {
 
-	mongo, err := bmodel.Init()
-	defer mongo.Close()
+	mongoSession, err := bmodel.Init((*server).MongoDbHost, (*server).MongoDbName)
+	defer mongoSession.Close()
 	if err != nil {
 		log.Fatal(err.Error())
 		return

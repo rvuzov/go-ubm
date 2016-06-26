@@ -5,6 +5,8 @@ import (
 )
 
 type (
+	logs struct{}
+
 	ULog struct {
 		UserID string      `json:"user"`
 		Key    string      `json:"key"`
@@ -14,10 +16,11 @@ type (
 
 var (
 	limit = 128
+	Logs  logs
 )
 
-func (l *ULog) Push() (err error) {
-	_, err = Metrics.Upsert(
+func (_ logs) Push(l *ULog) (err error) {
+	_, err = Models.Upsert(
 		bson.M{"id": (*l).UserID},
 		bson.M{
 			"$push": bson.M{

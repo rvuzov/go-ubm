@@ -44,7 +44,7 @@ func pushLog(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		Key:    key,
 		Value:  valuei,
 	}
-	err = ulog.Push()
+	err = bmodel.Logs.Push(&ulog)
 	if err != nil {
 		writeResponse(w, 500, fmt.Sprintf("Shit happens: %v", err.Error()))
 		return

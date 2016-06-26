@@ -5,6 +5,8 @@ import (
 )
 
 type (
+	metrics struct{}
+
 	UMetric struct {
 		UserID string `json:"user"`
 		Key    string `json:"key"`
@@ -12,8 +14,12 @@ type (
 	}
 )
 
-func (m *UMetric) Push() (err error) {
-	_, err = Metrics.Upsert(
+var (
+	Metrics metrics
+)
+
+func (_ metrics) Push(m *UMetric) (err error) {
+	_, err = Models.Upsert(
 		bson.M{"id": (*m).UserID},
 		bson.M{"$inc": bson.M{(*m).Key: (*m).Value}},
 	)

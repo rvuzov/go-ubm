@@ -43,7 +43,7 @@ func pushMetric(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		Key:    key,
 		Value:  valuei,
 	}
-	err = umetric.Push()
+	err = bmodel.Metrics.Push(&umetric)
 	if err != nil {
 		writeResponse(w, 500, fmt.Sprintf("Shit happens: %v", err.Error()))
 		return
