@@ -21,7 +21,6 @@ func (msg *MetricPush) Receive(APIAddr string) (err error) {
 	if code != 200 {
 		return errors.New(fmt.Sprintf("response code: %d", code))
 	}
-	fmt.Println(resp)
 
 	var expectedMessage service.Success
 	err = query.RestoreMessage(resp, "Success", &expectedMessage)
