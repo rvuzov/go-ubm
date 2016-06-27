@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	client := bclient.New("0.0.0.0:3001")
+	client := bclient.NewClient("0.0.0.0:3001")
 
 	err := client.PushMetric("good user", "chat.text", 45)
 	if err != nil {

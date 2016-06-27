@@ -4,89 +4,89 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 )
 
 type (
 	Client struct {
-		Addr string
+		Addr    string
+		APIAddr string
 	}
 
-	UMetric struct {
+	MetricPush struct {
 		UserID string `json:"user"`
 		Key    string `json:"key"`
 		Value  int    `json:"value"`
 	}
 
-	ULog struct {
+	LogPush struct {
 		UserID string      `json:"user"`
 		Key    string      `json:"key"`
 		Value  interface{} `json:"value"`
 	}
 )
 
-const (
-	PushMetricMethod = "push.metric"
-	PushLogMethod    = "push.log"
-)
-
-func New(addr string) Client {
-	client := Client{
-		Addr: addr,
+func NewClient(addr string) Client {
+	return Client{
+		Addr:    addr,
+		APIAddr: fmt.Sprintf("http://%s/", addr),
 	}
-	return client
 }
 
 func (c *Client) PushMetric(userID string, key string, value int) error {
-	params := url.Values{}
-	params.Add("userID", userID)
-	params.Add("key", key)
-	params.Add("value", strconv.Itoa(value))
-
-	uri := c.MakeURI(PushMetricMethod, params.Encode())
-
-	resp, err := http.Get(uri)
+	msg := MetricPush{
+		UserID: userID,
+		Key:    key,
+		Value:  value,
+	}
+	container, err := NewAPIContainer(msg)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Error: %d", resp.StatusCode))
+	response, code := c.SendAPIQuery(container)
+	if code != 200 {
+		return errors.New(fmt.Sprintf(`{error: "%s", code: %d`, response, code))
 	}
-
 	return nil
 }
 
 func (c *Client) PushLog(userID string, key string, value interface{}) error {
-	bytes, err := json.Marshal(value)
-	if err != nil {
-		return err
+	msg := LogPush{
+		UserID: userID,
+		Key:    key,
+		Value:  value,
 	}
-	svalue := string(bytes[:])
 
-	params := url.Values{}
-	params.Add("userID", userID)
-	params.Add("key", key)
-	params.Add("value", svalue)
-
-	uri := c.MakeURI(PushLogMethod, params.Encode())
-
-	resp, err := http.Get(uri)
-	defer resp.Body.Close()
+	container, err := NewAPIContainer(msg)
 	if err != nil {
 		return err
 	}
 
-	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Error: %d", resp.StatusCode))
+	response, code := c.SendAPIQuery(container)
+	if code != 200 {
+		return errors.New(fmt.Sprintf(`{error: "%s", code: %d`, response, code))
 	}
-
 	return nil
 }
 
-func (c *Client) MakeURI(method, params string) string {
-	return fmt.Sprintf("http://%s/%s?%s", c.Addr, method, params)
+func (c *Client) SendAPIQuery(msg interface{}) (response string, code int) {
+	query, err := json.Marshal(msg)
+	if err != nil {
+		return err.Error(), 0
+	}
+
+	form := url.Values{}
+	form.Add("query", string(query[:]))
+
+	resp, err := http.PostForm(c.APIAddr, form)
+	if err != nil {
+		return err.Error(), code
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	return string(body[:]), resp.StatusCode
 }

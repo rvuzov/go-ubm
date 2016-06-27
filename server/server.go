@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	bmodel "../bmodel"
+	"./api"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -18,7 +19,7 @@ type (
 	}
 )
 
-func New(addr string, mongoDbHost string, mongoDbName string) BServer {
+func NewServer(addr string, mongoDbHost string, mongoDbName string) BServer {
 	server := BServer{
 		Addr:        addr,
 		MongoDbHost: mongoDbHost,
@@ -38,8 +39,7 @@ func (server *BServer) Run() {
 
 	router := httprouter.New()
 
-	router.GET("/push.metric", pushMetric)
-	router.GET("/push.log", pushLog)
+	router.POST("/", apiController)
 
 	log.Printf("Run go-ubm server on http://%s", (*server).Addr)
 	log.Fatal(http.ListenAndServe((*server).Addr, router))
@@ -53,4 +53,12 @@ func writeResponse(w http.ResponseWriter, code int, result interface{}) {
 
 	jsonResult, _ := json.Marshal(result)
 	fmt.Fprintf(w, "%s", jsonResult)
+}
+
+func apiController(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	query := r.FormValue("query")
+	resp, code := api.Process(query)
+	writeResponse(w, code, resp)
+
+	log.Print(query)
 }

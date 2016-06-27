@@ -12,7 +12,7 @@ func main() {
 	mongoDbHost := config.Get("dbHost")
 	mongoDbName := config.Get("dbName")
 
-	server := bserver.New(serverAddress, mongoDbHost, mongoDbName)
+	server := bserver.NewServer(serverAddress, mongoDbHost, mongoDbName)
 	server.Run()
 
 }

@@ -6,12 +6,6 @@ import (
 
 type (
 	logs struct{}
-
-	ULog struct {
-		UserID string      `json:"user"`
-		Key    string      `json:"key"`
-		Value  interface{} `json:"value"`
-	}
 )
 
 var (
@@ -19,13 +13,13 @@ var (
 	Logs  logs
 )
 
-func (_ logs) Push(l *ULog) (err error) {
+func (_ logs) Push(userID string, key string, value interface{}) (err error) {
 	_, err = Models.Upsert(
-		bson.M{"id": (*l).UserID},
+		bson.M{"id": userID},
 		bson.M{
 			"$push": bson.M{
-				"logs." + (*l).Key: bson.M{
-					"$each":  []interface{}{(*l).Value},
+				"logs." + key: bson.M{
+					"$each":  []interface{}{value},
 					"$slice": -limit,
 				},
 			},
