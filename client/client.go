@@ -16,13 +16,13 @@ type (
 	}
 
 	MetricPush struct {
-		UserID string `json:"user"`
+		UserID string `json:"userID"`
 		Key    string `json:"key"`
 		Value  int    `json:"value"`
 	}
 
 	LogPush struct {
-		UserID string      `json:"user"`
+		UserID string      `json:"userID"`
 		Key    string      `json:"key"`
 		Value  interface{} `json:"value"`
 	}
