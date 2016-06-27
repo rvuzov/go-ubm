@@ -14,7 +14,7 @@ import (
 type (
 	APIContainer struct {
 		Type    string `json:"type"`
-		Message string `json:"message`
+		Message string `json:"message"`
 	}
 )
 
@@ -34,6 +34,8 @@ func (c *APIContainer) Process() (string, int) {
 	switch (*c).Type {
 	case "MetricPush":
 		msg = new(metric.MetricPush)
+	case "MetricGet":
+		msg = new(metric.MetricGet)
 	case "LogPush":
 		msg = new(log.LogPush)
 	default:

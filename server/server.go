@@ -41,6 +41,9 @@ func (server *BServer) Run() {
 
 	router.POST("/", apiController)
 
+	result, _ := bmodel.Metrics.Get("good user", []string{"chat.text", "chat.doc", "geo.kiev"})
+	fmt.Printf("%v\n", result)
+
 	log.Printf("Run go-ubm server on http://%s", (*server).Addr)
 	log.Fatal(http.ListenAndServe((*server).Addr, router))
 }
@@ -61,4 +64,5 @@ func apiController(w http.ResponseWriter, r *http.Request, p httprouter.Params) 
 	writeResponse(w, code, resp)
 
 	log.Print(query)
+	log.Print(resp)
 }

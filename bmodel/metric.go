@@ -1,6 +1,10 @@
 package bmodel
 
-import "gopkg.in/mgo.v2/bson"
+import (
+	"strconv"
+
+	"gopkg.in/mgo.v2/bson"
+)
 
 type (
 	metrics struct{}
@@ -25,18 +29,25 @@ func (_ metrics) Push(userID string, key string, value int) (err error) {
 	return
 }
 
-func (_ metrics) GetKeys(userID string, keys []string) (result []interface{}, err error) {
-	project := bson.M{
-		"id": "$id",
-	}
-	for _, key := range keys {
-		project[key] = "$" + key
+func (_ metrics) Get(userID string, keys []string) (answer map[string]int, err error) {
+	var result map[string]int
+	answer = make(map[string]int)
+
+	project := bson.M{}
+	for i, key := range keys {
+		project[strconv.Itoa(i)] = "$" + key // ugly hack
 	}
 
 	err = Models.Pipe([]bson.M{
 		bson.M{"$match": bson.M{"id": userID}},
 		bson.M{"$project": project},
-	}).All(&result)
+	}).One(&result)
+
+	for i, key := range keys {
+		if value, ok := result[strconv.Itoa(i)]; ok {
+			answer[key] = value
+		}
+	}
 
 	refresh("bmodel", err)
 	return

@@ -1,4 +1,4 @@
-package bclient
+package query
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 type (
 	APIContainer struct {
 		Type    string `json:"type"`
-		Message string `json:"message`
+		Message string `json:"message"`
 	}
 )
 
@@ -27,5 +27,10 @@ func NewAPIContainer(msg interface{}) (container APIContainer, err error) {
 		Type:    typeName,
 		Message: string(bytes[:]),
 	}
+	return
+}
+
+func RestoreContainer(s string) (container APIContainer, err error) {
+	err = json.Unmarshal([]byte(s), &container)
 	return
 }
