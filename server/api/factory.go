@@ -36,6 +36,8 @@ func (c *APIContainer) Process() (string, int) {
 		msg = new(metric.MetricPush)
 	case "MetricGet":
 		msg = new(metric.MetricGet)
+	case "MetricFindUsers":
+		msg = new(metric.MetricFindUsers)
 	case "LogPush":
 		msg = new(log.LogPush)
 	default:

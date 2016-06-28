@@ -1,6 +1,7 @@
 package bmodel
 
 import (
+	"errors"
 	"strconv"
 
 	"gopkg.in/mgo.v2/bson"
@@ -9,8 +10,13 @@ import (
 type (
 	metrics struct{}
 
+	UserMetric struct {
+		UserID  string         `json:"userID"`
+		Metrics map[string]int `json:"metrics"`
+	}
+
 	CompareStatement struct {
-		Key      string `json:"key"`
+		Metric   string `json:"metric"`
 		Operator string `json:"operator"`
 		Value    int    `json:"value"`
 	}
@@ -50,5 +56,82 @@ func (_ metrics) Get(userID string, keys []string) (answer map[string]int, err e
 	}
 
 	refresh("bmodel", err)
+	return
+}
+
+func (_ metrics) FindUsers(statements []CompareStatement) (answer []UserMetric, err error) {
+
+	var mongoStatements []bson.M
+	for _, statement := range statements {
+		mongoCmp, err := statement.ToMongoComparison()
+		if err != nil {
+			return answer, err
+		}
+		mongoStatements = append(mongoStatements, mongoCmp)
+	}
+	match := bson.M{"$and": mongoStatements}
+
+	project := bson.M{
+		"id": "$id",
+	}
+	for i, statement := range statements {
+		project[strconv.Itoa(i)] = "$" + statement.Metric
+	}
+
+	var results []bson.M
+	err = Models.Pipe(
+		[]bson.M{
+			bson.M{"$match": match},
+			bson.M{"$project": project},
+		},
+	).All(&results)
+	if err != nil {
+		return
+	}
+
+	for _, result := range results {
+		var tmpMetric UserMetric
+		tmpMetric.Metrics = make(map[string]int)
+
+		v, _ := result["id"]
+		tmpMetric.UserID, _ = v.(string)
+
+		for i, statement := range statements {
+			v, _ := result[strconv.Itoa(i)]
+			tmpMetric.Metrics[statement.Metric], _ = v.(int)
+		}
+		answer = append(answer, tmpMetric)
+	}
+
+	return
+}
+
+func (statement *CompareStatement) ToMongoComparison() (result bson.M, err error) {
+	var operator string
+
+	switch statement.Operator {
+	case "=":
+		operator = "$eq"
+	case "!=":
+		operator = "$ne"
+	case ">":
+		operator = "$gt"
+	case "<":
+		operator = "$lt"
+	case ">=":
+		operator = "$gte"
+	case "<=":
+		operator = "$lte"
+	default:
+		err = errors.New("unknown compare operator: " + statement.Operator)
+		return
+	}
+
+	result = bson.M{
+		(*statement).Metric: bson.M{
+			operator: (*statement).Value,
+		},
+	}
+
 	return
 }
