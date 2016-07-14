@@ -1,7 +1,7 @@
 package bclient
 
 import (
-	"./api/metric"
+	"github.com/Lamzin/go-ubm/client/api/metric"
 )
 
 type (

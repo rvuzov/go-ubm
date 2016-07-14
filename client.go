@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
-	"./client"
+	"github.com/Lamzin/go-ubm/client"
 )
 
-func main() {
+func main_example_client() {
 
 	example_MetricPush()
 	example_MetricGet()

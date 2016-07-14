@@ -1,8 +1,8 @@
 package log
 
 import (
-	"../../../ubm"
-	"../service"
+	"github.com/Lamzin/go-ubm/ubm"
+	"github.com/Lamzin/go-ubm/server/api/service"
 )
 
 type (

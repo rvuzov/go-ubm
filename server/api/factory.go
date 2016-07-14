@@ -6,9 +6,9 @@ import (
 
 	"reflect"
 
-	"./log"
-	"./metric"
-	"./service"
+	"github.com/Lamzin/go-ubm/server/api/log"
+	"github.com/Lamzin/go-ubm/server/api/metric"
+	"github.com/Lamzin/go-ubm/server/api/service"
 )
 
 type (

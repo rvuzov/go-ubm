@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"../ubm"
-	"./api"
+	"github.com/Lamzin/go-ubm/ubm"
+	"github.com/Lamzin/go-ubm/server/api"
 	"github.com/julienschmidt/httprouter"
 )
 

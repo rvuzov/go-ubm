@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"../query"
-	"../service"
+	"github.com/Lamzin/go-ubm/client/api/query"
+	"github.com/Lamzin/go-ubm/client/api/service"
 )
 
 type (

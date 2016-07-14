@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"../service"
+	"github.com/Lamzin/go-ubm/client/api/service"
 )
 
 func RestoreMessage(s string, expected string, msg interface{}) (err error) {
