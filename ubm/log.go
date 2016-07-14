@@ -9,7 +9,7 @@ type (
 )
 
 var (
-	limit = 128
+	limit = 32
 	Logs  logs
 )
 
