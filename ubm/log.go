@@ -24,6 +24,6 @@ func (_ logs) Push(userID string, key string, value interface{}) (err error) {
 				},
 			},
 		})
-	refresh("bmodel", err)
+	refresh("ubm", err)
 	return
 }

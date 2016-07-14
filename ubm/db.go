@@ -17,7 +17,7 @@ type (
 )
 
 var (
-	loger   = logging.MustGetLogger("bmodel")
+	loger   = logging.MustGetLogger("ubm")
 	context Context
 	Models  *mgo.Collection
 )

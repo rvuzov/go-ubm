@@ -31,7 +31,7 @@ func (_ metrics) Push(userID string, key string, value int) (err error) {
 		bson.M{"id": userID},
 		bson.M{"$inc": bson.M{key: value}},
 	)
-	refresh("bmodel", err)
+	refresh("ubm", err)
 	return
 }
 
@@ -55,7 +55,7 @@ func (_ metrics) Get(userID string, keys []string) (answer map[string]int, err e
 		}
 	}
 
-	refresh("bmodel", err)
+	refresh("umb", err)
 	return
 }
 
