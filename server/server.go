@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	bmodel "../bmodel"
+	"../ubm"
 	"./api"
 	"github.com/julienschmidt/httprouter"
 )
@@ -30,7 +30,7 @@ func NewServer(addr string, mongoDbHost string, mongoDbName string) BServer {
 
 func (server *BServer) Run() {
 
-	mongoSession, err := bmodel.Init((*server).MongoDbHost, (*server).MongoDbName)
+	mongoSession, err := ubm.Init((*server).MongoDbHost, (*server).MongoDbName)
 	defer mongoSession.Close()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -41,7 +41,7 @@ func (server *BServer) Run() {
 
 	router.POST("/", apiController)
 
-	result, _ := bmodel.Metrics.Get("good user", []string{"chat.text", "chat.doc", "geo.kiev"})
+	result, _ := ubm.Metrics.Get("good user", []string{"chat.text", "chat.doc", "geo.kiev"})
 	fmt.Printf("%v\n", result)
 
 	log.Printf("Run go-ubm server on http://%s", (*server).Addr)

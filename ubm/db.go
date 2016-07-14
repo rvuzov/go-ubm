@@ -1,4 +1,4 @@
-package bmodel
+package ubm
 
 import (
 	"github.com/op/go-logging"

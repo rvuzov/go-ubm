@@ -1,4 +1,4 @@
-package bmodel
+package ubm
 
 import (
 	"gopkg.in/mgo.v2/bson"

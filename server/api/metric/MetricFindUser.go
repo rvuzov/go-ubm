@@ -1,7 +1,7 @@
 package metric
 
 import (
-	"../../../bmodel"
+	"../../../ubm"
 	"../service"
 )
 
@@ -22,8 +22,8 @@ type (
 
 func (msg *MetricFindUsers) Receive() interface{} {
 
-	var cmp bmodel.CompareStatement
-	var compareStatements []bmodel.CompareStatement
+	var cmp ubm.CompareStatement
+	var compareStatements []ubm.CompareStatement
 
 	for _, statement := range *msg {
 		cmp.Metric = statement.Metric
@@ -32,7 +32,7 @@ func (msg *MetricFindUsers) Receive() interface{} {
 		compareStatements = append(compareStatements, cmp)
 	}
 
-	usersMetrics, err := bmodel.Metrics.FindUsers(compareStatements)
+	usersMetrics, err := ubm.Metrics.FindUsers(compareStatements)
 
 	if err != nil {
 		return service.NewError(err.Error())

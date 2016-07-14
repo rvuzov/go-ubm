@@ -1,7 +1,7 @@
 package metric
 
 import (
-	"../../../bmodel"
+	"../../../ubm"
 	"../service"
 )
 
@@ -15,7 +15,7 @@ type (
 
 func (msg *MetricPush) Receive() interface{} {
 
-	err := bmodel.Metrics.Push(
+	err := ubm.Metrics.Push(
 		(*msg).UserID,
 		(*msg).Key,
 		(*msg).Value,

@@ -1,7 +1,7 @@
 package log
 
 import (
-	"../../../bmodel"
+	"../../../ubm"
 	"../service"
 )
 
@@ -15,7 +15,7 @@ type (
 
 func (msg *LogPush) Receive() interface{} {
 
-	err := bmodel.Logs.Push(
+	err := ubm.Logs.Push(
 		(*msg).UserId,
 		(*msg).Key,
 		(*msg).Value,
