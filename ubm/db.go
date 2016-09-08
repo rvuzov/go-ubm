@@ -30,6 +30,10 @@ func Init(dbHost string, dbName string) (*mgo.Session, error) {
 	}
 	loger.Info("DB ok")
 
+	mongoSession.SetMode(mgo.Monotonic, true)
+	mongoSession.SetSafe(nil)
+	mongoSession.Fsync(false)
+
 	context = Context{
 		Session: mongoSession,
 		Db:      mongoSession.DB(dbName),
