@@ -10,10 +10,8 @@ func main_example_client() {
 
 	example_MetricPush()
 	example_MetricGet()
-	example_MetricFindUser()
 
 	example_LogPush()
-
 }
 
 func example_LogPush() {
@@ -56,40 +54,6 @@ func example_MetricGet() {
 	} else {
 		log.Print("Done!")
 		log.Printf("%v\n", metrics)
-	}
-
-}
-
-func example_MetricFindUser() {
-
-	client := bclient.NewClient("0.0.0.0:3001")
-
-	var cmps []bclient.Cmp
-	cmps = append(
-		cmps,
-		bclient.Cmp{
-			Metric:   "chat.text",
-			Operator: ">",
-			Value:    10,
-		},
-	)
-
-	cmps = append(
-		cmps,
-		bclient.Cmp{
-			Metric:   "chat.text",
-			Operator: "<",
-			Value:    20,
-		},
-	)
-
-	result, err := client.MetricFindUsers(cmps)
-
-	if err != nil {
-		log.Print(err.Error())
-	} else {
-		log.Print("Done!")
-		log.Printf("%v\n", result)
 	}
 
 }
