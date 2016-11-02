@@ -13,17 +13,7 @@ type (
 	}
 )
 
-func (msg *MetricPush) Receive() interface{} {
-
-	err := ubm.Metrics.Push(
-		(*msg).UserID,
-		(*msg).Key,
-		(*msg).Value,
-	)
-
-	if err != nil {
-		return service.NewError(err.Error())
-	}
-
+func (m *MetricPush) Receive() interface{} {
+	ubm.Metrics.Push(m.UserID, m.Key, m.Value)
 	return service.NewSuccess()
 }

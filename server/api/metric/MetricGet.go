@@ -17,19 +17,15 @@ type (
 	}
 )
 
-func (msg *MetricGet) Receive() interface{} {
-
-	metrics, err := ubm.Metrics.Get(
-		(*msg).UserID,
-		(*msg).Metrics,
-	)
+func (m *MetricGet) Receive() interface{} {
+	metrics, err := ubm.Metrics.Get(m.UserID, m.Metrics)
 
 	if err != nil {
 		return service.NewError(err.Error())
 	}
 
 	return MetricGetResponse{
-		UserID:  (*msg).UserID,
+		UserID:  (*m).UserID,
 		Metrics: metrics,
 	}
 
