@@ -9,7 +9,7 @@ import (
 
 const (
 	metricsPushWorkersCount = 8
-	metricsChanSize         = 100000
+	metricsChanSize         = 1000000
 )
 
 type (
@@ -28,13 +28,11 @@ var Metrics metrics
 var mutex = &sync.Mutex{}
 
 func (m *metrics) Init() {
-	loger.Info("Start init metrics")
 	m.Queue = make(chan string, metricsChanSize)
 	m.Metrics = make(map[string]*[]Metric, 0)
 	for i := 0; i < metricsPushWorkersCount; i++ {
 		go m.push()
 	}
-	loger.Info("Finish init metrics")
 }
 
 func (m *metrics) Get(userID string, keys []string) (answer map[string]int, err error) {
@@ -46,7 +44,6 @@ func (m *metrics) Get(userID string, keys []string) (answer map[string]int, err 
 		project[strconv.Itoa(i)] = "$" + key // ugly hack
 	}
 
-	loger.Info("models: ", Models)
 	err = Models.Pipe([]bson.M{
 		bson.M{"$match": bson.M{"id": userID}},
 		bson.M{"$project": project},
@@ -91,7 +88,6 @@ func (m *metrics) push() {
 		for _, metric := range *arr {
 			unique[metric.Key] += metric.Value
 		}
-		loger.Info("unique: ", unique)
 
 		_, err := Models.Upsert(
 			bson.M{"id": userID},
