@@ -1,7 +1,6 @@
 package ubm
 
 import (
-	"errors"
 	"strconv"
 
 	"gopkg.in/mgo.v2/bson"
