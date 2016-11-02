@@ -4,37 +4,40 @@ import (
 	"strconv"
 
 	"gopkg.in/mgo.v2/bson"
+	"sync"
+)
+
+const (
+	metricsPushWorkersCount = 8
+	metricsChanSize         = 100000
 )
 
 type (
-	metrics struct{}
-
-	UserMetric struct {
-		UserID  string         `json:"userID"`
-		Metrics map[string]int `json:"metrics"`
+	metrics struct {
+		Queue   chan string
+		Metrics map[string]*[]Metric
 	}
 
-	CompareStatement struct {
-		Metric   string `json:"metric"`
-		Operator string `json:"operator"`
-		Value    int    `json:"value"`
+	Metric struct {
+		Key   string
+		Value int
 	}
 )
 
-var (
-	Metrics metrics
-)
+var Metrics metrics
+var mutex = &sync.Mutex{}
 
-func (_ metrics) Push(userID string, key string, value int) (err error) {
-	_, err = Models.Upsert(
-		bson.M{"id": userID},
-		bson.M{"$inc": bson.M{key: value}},
-	)
-	refresh("ubm", err)
-	return
+func (m *metrics) Init() {
+	loger.Info("Start init metrics")
+	m.Queue = make(chan string, metricsChanSize)
+	m.Metrics = make(map[string]*[]Metric, 0)
+	for i := 0; i < metricsPushWorkersCount; i++ {
+		go m.push()
+	}
+	loger.Info("Finish init metrics")
 }
 
-func (_ metrics) Get(userID string, keys []string) (answer map[string]int, err error) {
+func (m *metrics) Get(userID string, keys []string) (answer map[string]int, err error) {
 	var result map[string]int
 	answer = make(map[string]int)
 
@@ -43,6 +46,7 @@ func (_ metrics) Get(userID string, keys []string) (answer map[string]int, err e
 		project[strconv.Itoa(i)] = "$" + key // ugly hack
 	}
 
+	loger.Info("models: ", Models)
 	err = Models.Pipe([]bson.M{
 		bson.M{"$match": bson.M{"id": userID}},
 		bson.M{"$project": project},
@@ -56,4 +60,43 @@ func (_ metrics) Get(userID string, keys []string) (answer map[string]int, err e
 
 	refresh("umb", err)
 	return
+}
+
+func (m *metrics) Push(userID string, key string, value int) {
+	mutex.Lock()
+	if arr, ok := m.Metrics[userID]; ok {
+		*arr = append(*arr, Metric{Key: key, Value: value})
+	} else {
+		newArr := make([]Metric, 1)
+		newArr[0] = Metric{Key: key, Value: value}
+		m.Metrics[userID] = &newArr
+		m.Queue <- userID
+	}
+	mutex.Unlock()
+}
+
+func (m *metrics) push() {
+	for userID := range m.Queue {
+		mutex.Lock()
+		arr, ok := m.Metrics[userID]
+		delete(m.Metrics, userID)
+		mutex.Unlock()
+
+		if !ok {
+			loger.Errorf("user(%s) can't find metrics in map", userID)
+			continue
+		}
+
+		unique := make(map[string]int, 0)
+		for _, metric := range *arr {
+			unique[metric.Key] += metric.Value
+		}
+		loger.Info("unique: ", unique)
+
+		_, err := Models.Upsert(
+			bson.M{"id": userID},
+			bson.M{"$inc": unique},
+		)
+		refresh("ubm", err)
+	}
 }
