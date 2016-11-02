@@ -19,13 +19,11 @@ type (
 
 func (m *MetricGet) Receive() interface{} {
 	metrics, err := ubm.Metrics.Get(m.UserID, m.Metrics)
-
 	if err != nil {
 		return service.NewError(err.Error())
 	}
-
 	return MetricGetResponse{
-		UserID:  (*m).UserID,
+		UserID:  m.UserID,
 		Metrics: metrics,
 	}
 

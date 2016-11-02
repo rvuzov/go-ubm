@@ -13,17 +13,10 @@ type (
 	}
 )
 
-func (msg *LogPush) Receive() interface{} {
-
-	err := ubm.Logs.Push(
-		(*msg).UserId,
-		(*msg).Key,
-		(*msg).Value,
-	)
-
+func (m *LogPush) Receive() interface{} {
+	err := ubm.Logs.Push(m.UserId, m.Key, m.Value)
 	if err != nil {
 		return service.NewError(err.Error())
 	}
-
 	return service.NewSuccess()
 }
