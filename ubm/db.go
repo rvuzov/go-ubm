@@ -43,6 +43,8 @@ func Init(dbHost string, dbName string) (*mgo.Session, error) {
 
 	Metrics.Init()
 	loger.Info("init metrics: OK")
+	Logs.Init()
+	loger.Info("init logs: OK")
 
 	return mongoSession, err
 }
