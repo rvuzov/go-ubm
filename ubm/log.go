@@ -27,6 +27,7 @@ type (
 var Logs logs
 
 func (l *logs) Init() {
+	l.mutex = &sync.Mutex{}
 	l.Queue = make(chan string, logsChanSize)
 	l.Logs = make(map[string]*[]Log, 0)
 	for i := 0; i < logsPushWorkersCount; i++ {

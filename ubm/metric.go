@@ -28,6 +28,7 @@ type (
 var Metrics metrics
 
 func (m *metrics) Init() {
+	m.mutex = &sync.Mutex{}
 	m.Queue = make(chan string, metricsChanSize)
 	m.Metrics = make(map[string]*[]Metric, 0)
 	for i := 0; i < metricsPushWorkersCount; i++ {
