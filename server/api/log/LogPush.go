@@ -14,9 +14,6 @@ type (
 )
 
 func (m *LogPush) Receive() interface{} {
-	err := ubm.Logs.Push(m.UserId, m.Key, m.Value)
-	if err != nil {
-		return service.NewError(err.Error())
-	}
+	ubm.Logs.Push(m.UserId, m.Key, m.Value)
 	return service.NewSuccess()
 }
