@@ -14,6 +14,7 @@ const (
 
 type (
 	metrics struct {
+		mutex   *sync.Mutex
 		Queue   chan string
 		Metrics map[string]*[]Metric
 	}
@@ -25,7 +26,6 @@ type (
 )
 
 var Metrics metrics
-var mutex = &sync.Mutex{}
 
 func (m *metrics) Init() {
 	m.Queue = make(chan string, metricsChanSize)
@@ -60,7 +60,7 @@ func (m *metrics) Get(userID string, keys []string) (answer map[string]int, err 
 }
 
 func (m *metrics) Push(userID string, key string, value int) {
-	mutex.Lock()
+	m.mutex.Lock()
 	if arr, ok := m.Metrics[userID]; ok {
 		*arr = append(*arr, Metric{Key: key, Value: value})
 	} else {
@@ -69,15 +69,15 @@ func (m *metrics) Push(userID string, key string, value int) {
 		m.Metrics[userID] = &newArr
 		m.Queue <- userID
 	}
-	mutex.Unlock()
+	m.mutex.Unlock()
 }
 
 func (m *metrics) push() {
 	for userID := range m.Queue {
-		mutex.Lock()
+		m.mutex.Lock()
 		arr, ok := m.Metrics[userID]
 		delete(m.Metrics, userID)
-		mutex.Unlock()
+		m.mutex.Unlock()
 
 		if !ok {
 			loger.Errorf("user(%s) can't find metrics in map", userID)
