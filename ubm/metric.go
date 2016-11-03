@@ -1,10 +1,8 @@
 package ubm
 
 import (
-	"strconv"
-
 	"gopkg.in/mgo.v2/bson"
-	"sync"
+	"strconv"
 )
 
 const (
@@ -14,7 +12,7 @@ const (
 
 type (
 	metrics struct {
-		mutex   *sync.Mutex
+		lock    chan struct{}
 		Queue   chan string
 		Metrics map[string]*[]Metric
 	}
@@ -28,7 +26,7 @@ type (
 var Metrics metrics
 
 func (m *metrics) Init() {
-	m.mutex = &sync.Mutex{}
+	m.lock = make(chan struct{}, 1)
 	m.Queue = make(chan string, metricsChanSize)
 	m.Metrics = make(map[string]*[]Metric, 0)
 	for i := 0; i < metricsPushWorkersCount; i++ {
@@ -61,7 +59,7 @@ func (m *metrics) Get(userID string, keys []string) (answer map[string]int, err 
 }
 
 func (m *metrics) Push(userID string, key string, value int) {
-	m.mutex.Lock()
+	m.lock <- struct{}{}
 	if arr, ok := m.Metrics[userID]; ok {
 		*arr = append(*arr, Metric{Key: key, Value: value})
 	} else {
@@ -70,15 +68,15 @@ func (m *metrics) Push(userID string, key string, value int) {
 		m.Metrics[userID] = &newArr
 		m.Queue <- userID
 	}
-	m.mutex.Unlock()
+	<-m.lock
 }
 
 func (m *metrics) push() {
 	for userID := range m.Queue {
-		m.mutex.Lock()
+		m.lock <- struct{}{}
 		arr, ok := m.Metrics[userID]
 		delete(m.Metrics, userID)
-		m.mutex.Unlock()
+		<-m.lock
 
 		if !ok {
 			loger.Errorf("user(%s) can't find metrics in map", userID)

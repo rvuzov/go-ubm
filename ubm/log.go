@@ -1,9 +1,6 @@
 package ubm
 
-import (
-	"gopkg.in/mgo.v2/bson"
-	"sync"
-)
+import "gopkg.in/mgo.v2/bson"
 
 const (
 	logsPushWorkersCount = 4
@@ -13,7 +10,7 @@ const (
 
 type (
 	logs struct {
-		mutex *sync.Mutex
+		lock  chan struct{}
 		Queue chan string
 		Logs  map[string]*[]Log
 	}
@@ -27,7 +24,7 @@ type (
 var Logs logs
 
 func (l *logs) Init() {
-	l.mutex = &sync.Mutex{}
+	l.lock = make(chan struct{}, 1)
 	l.Queue = make(chan string, logsChanSize)
 	l.Logs = make(map[string]*[]Log, 0)
 	for i := 0; i < logsPushWorkersCount; i++ {
@@ -36,7 +33,7 @@ func (l *logs) Init() {
 }
 
 func (l *logs) Push(userID string, key string, value interface{}) {
-	l.mutex.Lock()
+	l.lock <- struct{}{}
 	if arr, ok := l.Logs[userID]; ok {
 		*arr = append(*arr, Log{Key: key, Value: value})
 	} else {
@@ -45,15 +42,15 @@ func (l *logs) Push(userID string, key string, value interface{}) {
 		l.Logs[userID] = &newArr
 		l.Queue <- userID
 	}
-	l.mutex.Unlock()
+	<-l.lock
 }
 
 func (l *logs) push() {
 	for userID := range l.Queue {
-		l.mutex.Lock()
+		l.lock <- struct{}{}
 		arr, ok := l.Logs[userID]
 		delete(l.Logs, userID)
-		l.mutex.Unlock()
+		<-l.lock
 
 		if !ok {
 			loger.Errorf("user(%s) can't find metrics in map", userID)
