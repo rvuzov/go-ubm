@@ -13,6 +13,10 @@ type (
 		lock  chan struct{}
 		Queue chan string
 		Logs  map[string]*[]Log
+
+		PushCalls         int64
+		MongoUpsertCalls  int64
+		PushLogsFrequency map[int]int64
 	}
 
 	Log struct {
@@ -43,6 +47,7 @@ func (l *logs) Push(userID string, key string, value interface{}) {
 		l.Queue <- userID
 	}
 	<-l.lock
+	l.PushCalls++
 }
 
 func (l *logs) push() {
@@ -82,5 +87,7 @@ func (l *logs) push() {
 				"$push": push,
 			})
 		refresh("ubm", err)
+		l.MongoUpsertCalls++
+		l.PushLogsFrequency[len(*arr)]++
 	}
 }

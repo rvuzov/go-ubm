@@ -15,6 +15,11 @@ type (
 		lock    chan struct{}
 		Queue   chan string
 		Metrics map[string]*[]Metric
+
+		GetCalls             int64
+		PushCalls            int64
+		MongoUpsertCalls     int64
+		PushMetricsFrequency map[int]int64
 	}
 
 	Metric struct {
@@ -55,6 +60,7 @@ func (m *metrics) Get(userID string, keys []string) (answer map[string]int, err 
 	}
 
 	refresh("umb", err)
+	m.GetCalls++
 	return
 }
 
@@ -69,6 +75,7 @@ func (m *metrics) Push(userID string, key string, value int) {
 		m.Queue <- userID
 	}
 	<-m.lock
+	m.PushCalls++
 }
 
 func (m *metrics) push() {
@@ -93,5 +100,7 @@ func (m *metrics) push() {
 			bson.M{"$inc": unique},
 		)
 		refresh("ubm", err)
+		m.MongoUpsertCalls++
+		m.PushMetricsFrequency[len(*arr)]++
 	}
 }
