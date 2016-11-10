@@ -34,6 +34,7 @@ func (m *metrics) Init() {
 	m.lock = make(chan struct{}, 1)
 	m.Queue = make(chan string, metricsChanSize)
 	m.Metrics = make(map[string]*[]Metric, 0)
+	m.PushMetricsFrequency = make(map[int]int64, 0)
 	for i := 0; i < metricsPushWorkersCount; i++ {
 		go m.push()
 	}

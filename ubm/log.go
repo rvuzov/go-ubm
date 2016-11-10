@@ -31,6 +31,7 @@ func (l *logs) Init() {
 	l.lock = make(chan struct{}, 1)
 	l.Queue = make(chan string, logsChanSize)
 	l.Logs = make(map[string]*[]Log, 0)
+	l.PushLogsFrequency = make(map[int]int64, 0)
 	for i := 0; i < logsPushWorkersCount; i++ {
 		go l.push()
 	}
