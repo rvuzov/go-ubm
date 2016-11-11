@@ -10,13 +10,13 @@ const (
 
 type (
 	logs struct {
-		lock  chan struct{}
-		Queue chan string
-		Logs  map[string]*[]Log
+		lock              chan struct{}
+		Queue             chan string
+		logs              map[string]*[]Log
 
 		PushCalls         int64
 		MongoUpsertCalls  int64
-		PushLogsFrequency map[int]int64
+		pushLogsFrequency map[int]int64
 	}
 
 	Log struct {
@@ -30,32 +30,44 @@ var Logs logs
 func (l *logs) Init() {
 	l.lock = make(chan struct{}, 1)
 	l.Queue = make(chan string, logsChanSize)
-	l.Logs = make(map[string]*[]Log, 0)
-	l.PushLogsFrequency = make(map[int]int64, 0)
+	l.logs = make(map[string]*[]Log, 0)
+	l.pushLogsFrequency = make(map[int]int64, 0)
 	for i := 0; i < logsPushWorkersCount; i++ {
 		go l.push()
 	}
 }
 
+func (l *logs) GetPushMetricsFrequency() map[int]int64 {
+	l.lock <- struct{}{}
+	f := make(map[int]int64, len(l.pushLogsFrequency))
+	for k, v := range l.pushLogsFrequency {
+		f[k] = v
+	}
+	<-l.lock
+	return f
+}
+
 func (l *logs) Push(userID string, key string, value interface{}) {
 	l.lock <- struct{}{}
-	if arr, ok := l.Logs[userID]; ok {
+	if arr, ok := l.logs[userID]; ok {
 		*arr = append(*arr, Log{Key: key, Value: value})
 	} else {
 		newArr := make([]Log, 1)
 		newArr[0] = Log{Key: key, Value: value}
-		l.Logs[userID] = &newArr
+		l.logs[userID] = &newArr
 		l.Queue <- userID
 	}
-	<-l.lock
 	l.PushCalls++
+	<-l.lock
 }
 
 func (l *logs) push() {
 	for userID := range l.Queue {
 		l.lock <- struct{}{}
-		arr, ok := l.Logs[userID]
-		delete(l.Logs, userID)
+		arr, ok := l.logs[userID]
+		delete(l.logs, userID)
+		l.MongoUpsertCalls++
+		l.pushLogsFrequency[len(*arr)]++
 		<-l.lock
 
 		if !ok {
@@ -88,7 +100,5 @@ func (l *logs) push() {
 				"$push": push,
 			})
 		refresh("ubm", err)
-		l.MongoUpsertCalls++
-		l.PushLogsFrequency[len(*arr)]++
 	}
 }
