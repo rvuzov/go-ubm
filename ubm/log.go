@@ -1,6 +1,9 @@
 package ubm
 
-import "gopkg.in/mgo.v2/bson"
+import (
+	"gopkg.in/mgo.v2/bson"
+	"strconv"
+)
 
 const (
 	logsPushWorkersCount = 4
@@ -10,10 +13,11 @@ const (
 
 type (
 	logs struct {
-		lock              chan struct{}
-		Queue             chan string
-		logs              map[string]*[]Log
+		lock  chan struct{}
+		Queue chan string
+		logs  map[string]*[]Log
 
+		GetCalls          int64
 		PushCalls         int64
 		MongoUpsertCalls  int64
 		pushLogsFrequency map[int]int64
@@ -101,4 +105,61 @@ func (l *logs) push() {
 			})
 		refresh("ubm", err)
 	}
+}
+
+func (l *logs) Get(userID string, keys ...string) (answer map[string][]LogItem, err error) {
+	var result map[string]interface{}
+	answer = make(map[string][]LogItem, 0)
+
+	project := bson.M{}
+	for i, key := range keys {
+		project[strconv.Itoa(i)] = "$logs." + key
+	}
+
+	err = Models.Pipe([]bson.M{
+		bson.M{"$match": bson.M{"id": userID}},
+		bson.M{"$project": project},
+	}).One(&result)
+
+	for i, key := range keys {
+		if value, ok := result[strconv.Itoa(i)]; ok {
+			if arr, ok := value.([]interface{}); ok {
+				logArray := make([]LogItem, len(arr))
+				for i, item := range arr {
+					logArray[i] = LogItem{Item: item}
+				}
+				answer[key] = logArray
+			}
+		}
+	}
+
+	refresh("umb", err)
+	l.GetCalls++
+	return
+}
+
+type LogItem struct{
+	Item interface{}
+}
+
+func (l LogItem) MustGetInt(key string) (i int) {
+	if value, ok := l.get(key); ok {
+		i, _ = value.(int)
+	}
+	return
+}
+
+func (l LogItem) MustGetString(key string) (s string) {
+	if value, ok := l.get(key); ok {
+		s, _ = value.(string)
+	}
+	return
+}
+
+func (l LogItem) get(key string) (interface{}, bool) {
+	if m, ok := l.Item.(map[string]interface{}); ok {
+		v, ok := m[key]
+		return v, ok
+	}
+	return nil, false
 }

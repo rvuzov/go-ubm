@@ -1,6 +1,8 @@
 package ubm
 
 import (
+	"strings"
+
 	"github.com/op/go-logging"
 	"gopkg.in/mgo.v2"
 )
@@ -55,13 +57,23 @@ func refresh(source string, err error) {
 	}
 
 	if err.Error() == "not found" {
-		loger.Notice(source + " " + err.Error())
+		loger.Noticef("%s %s", source, err.Error())
 	} else {
-		loger.Error(source + " " + err.Error())
+		loger.Errorf("%s %s", source, err.Error())
+	}
+
+	if strings.Contains(err.Error(), "timeout") {
+		loger.Warning("UBM refresh by timeout", source, err)
+		context.Session.Refresh()
+	}
+
+	if strings.Contains(err.Error(), "connection reset by peer") {
+		loger.Warning("UBM refresh by reset by peer", source, err)
+		context.Session.Refresh()
 	}
 
 	if err.Error() == "EOF" {
-		loger.Warning("DB connect autoRefresh")
+		loger.Warning("UBM refresh by EOF", source, err)
 		context.Session.Refresh()
 	}
 }

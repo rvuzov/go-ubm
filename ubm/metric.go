@@ -56,7 +56,7 @@ func (m *metrics) Get(userID string, keys []string) (answer map[string]int, err 
 
 	project := bson.M{}
 	for i, key := range keys {
-		project[strconv.Itoa(i)] = "$" + key // ugly hack
+		project[strconv.Itoa(i)] = "$" + key
 	}
 
 	err = Models.Pipe([]bson.M{
